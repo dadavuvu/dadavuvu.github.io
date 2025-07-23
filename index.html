@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>컴시간</title>
+    <style>
+        @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-jp-dynamic-subset.min.css");
+        @import url('https://cdn.jsdelivr.net/gh/fonts-archive/Freesentation/Freesentation.css');
+
+        body {
+            font-family: 'Freesentation', 'Pretendard JP', sans-serif !important;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            /* 최신 웹사이트 트렌드의 밝은 배경색 */
+            color: #333;
+            /* 최신 웹사이트 트렌드의 어두운 글자색 */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        marquee {
+            background-color: #0d4cbb;
+            /* 공지사항 배경색 - 빨간색 */
+            color: #fff;
+            /* 공지사항 글자색 - 흰색 */
+            font-size: 3em;
+            font-weight: 700;
+            overflow: hidden;
+            white-space: nowrap;
+            padding: .1em;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 10px;
+            flex-grow: 1;
+        }
+
+        .section {
+            background-color: #fff;
+            /* 섹션 배경색 */
+            border: 1px solid #e0e0e0;
+            /* 섹션 테두리 색상 */
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* 수평 가운데 정렬 */
+            margin: 0;
+            padding: 20px;
+            position: relative;
+        }
+
+        .section h2 {
+            font-size: 3em;
+            margin: 0;
+            text-align: center;
+        }
+
+        .section p {
+            font-size: 1.8em;
+            margin: 5px 0;
+            text-align: center;
+        }
+
+        .textbox-container {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            position: relative;
+            margin-top: 20px;
+        }
+
+        #oneLineTextbox,
+        #textbox,
+        #lunch {
+            width: 100%;
+            /* 높이 조정 */
+            font-size: 2em;
+            font-weight: bold;
+            font-family: 'Freesentation', 'Pretendard JP', sans-serif !important;
+            /* 폰트 수정 */
+            text-align: center;
+            /* 텍스트 가운데 정렬 */
+            resize: none;
+            /* 사용자 크기 조정 비활성화 */
+            border: none;
+        }
+
+        #oneLineTextbox {
+            font-size: 3em;
+        }
+
+        #textbox {
+            height: calc(100% - 108px);
+            text-align: left;
+        }
+
+        #lunch {
+            height: 100%;
+            text-align: left;
+            font-size: 2.9em;
+        }
+
+        .section iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        * {
+            cursor: none
+        }
+    </style>
+</head>
+
+<body>
+    <marquee id="marqueeText">공지사항</marquee>
+    <div class="container">
+        <div class="section" style="grid-row: 1 / span 2; grid-column: 1;">
+            <h2 id="iframetitle" style="margin-bottom: .5em;">시간표</h2>
+            <iframe id="iframe1" src="http://comci.net:4082/st" title="Timetable" scrolling="no"></iframe>
+            <iframe id="iframe2" src="http://comci.net:4082/th" title="Timetable" scrolling="no"></iframe>
+        </div>
+        <div class="section" style="grid-row: 1 / span 2; grid-column: 2;">
+            <h2>급식표</h2>
+            <textarea id="lunch" spellcheck="false"></textarea>
+        </div>
+    </div>
+    <script>
+        let showFirst = true;
+        const iframe1 = document.getElementById('iframe1');
+        const iframe2 = document.getElementById('iframe2');
+        iframe1.style.display = 'block';
+        iframe2.style.display = 'none';
+        document.getElementById('iframetitle').textContent = "학급 시간표";
+
+        setInterval(() => {
+            if (showFirst) {
+                iframe1.style.display = 'none';
+                iframe2.style.display = 'block';
+                document.getElementById('iframetitle').textContent = "선생님 시간표";
+            } else {
+                iframe1.style.display = 'block';
+                iframe2.style.display = 'none';
+                document.getElementById('iframetitle').textContent = "학급 시간표";
+            }
+
+            showFirst = !showFirst;
+        }, 10000); // 10초 = 10000ms
+
+        function setCookie(name, value, days) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+        }
+
+        function getCookie(name) {
+            return document.cookie.split('; ').reduce((r, v) => {
+                const parts = v.split('=');
+                return parts[0] === name ? decodeURIComponent(parts[1]) : r
+            }, '');
+        }
+
+        function getQueryParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function updateMarqueeText() {
+            const marqueeText = getQueryParameter('notice');
+
+            if (marqueeText != null) {
+                // 쿼리 파라미터가 있으면 쿠키 저장
+                setCookie('notice', marqueeText, 7); // 7일간 유지
+                document.getElementById('marqueeText').textContent = marqueeText;
+                document.getElementById('marqueeText').style.display = 'block';
+            } else {
+                // 쿠키에 저장된 값 불러오기
+                const savedNotice = getCookie('notice');
+                if (savedNotice) {
+                    document.getElementById('marqueeText').textContent = savedNotice;
+                    document.getElementById('marqueeText').style.display = 'block';
+                } else {
+                    document.getElementById('marqueeText').style.display = 'none';
+                }
+            }
+        }
+
+        const fetchMealInfo = async () => {
+            const officeCode = "E10"
+            const schoolCode = "7331070"
+            const apiKey = "3d8ee471c09c43abbc3e1b22dd30fef9"
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+            const koreaTimeDiff = 9 * 60 * 60 * 1000;
+            const korNow = new Date(utc + koreaTimeDiff);
+            const baseDate = new Date(korNow);
+
+            if (korNow.getHours() >= 12) {
+                baseDate.setDate(baseDate.getDate() + 1);
+            }
+
+            const today = baseDate.toISOString().split('T')[0].replace(/-/g, '');
+            const tomorrowDate = new Date(baseDate);
+            tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+            const tomorrow = tomorrowDate.toISOString().split('T')[0].replace(/-/g, '');
+
+            const getMeal = async (date) => {
+                const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?KEY=${apiKey}&Type=json&ATPT_OFCDC_SC_CODE=${officeCode}&SD_SCHUL_CODE=${schoolCode}&MLSV_YMD=${date}`;
+
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.mealServiceDietInfo) {
+                        const mealInfo = data.mealServiceDietInfo[1].row[0];
+                        return mealInfo.DDISH_NM.replace(/<br\/>/g, '\n').replace(/^/gm, "ㆍ");
+                    } else {
+                        return '정보 없음';
+                    }
+                } catch (error) {
+                    return '오류 발생: ' + error.message;
+                }
+            };
+
+            const todayMeal = await getMeal(today);
+            const tomorrowMeal = await getMeal(tomorrow);
+            return [todayMeal, tomorrowMeal]
+        };
+
+        // 예시 호출 (값은 실제로 사용하는 학교 정보로 교체하세요)
+
+
+        // 페이지 로드 및 업데이트 시 호출
+        window.onload = async () => {
+            updateMarqueeText()
+            var [today, tomorrow] = await fetchMealInfo();
+            document.querySelector("#lunch").value = today + "\n\n" + tomorrow
+        };
+    </script>
+</body>
+
+</html>
+
+<!-- @-moz-document url-prefix("http://comci.net:4082/") {
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-jp-dynamic-subset.min.css");
+@import url('https://cdn.jsdelivr.net/gh/fonts-archive/Freesentation/Freesentation.css');
+
+#hour > table,
+#hour {
+    width: 100% !important;
+    margin: 0 !important;
+    height: 100% !important;
+    border: none;
+}
+
+#시간표열람 {
+    height: 100% !important;
+}
+
+#시간표열람 > *:not(#hour),
+tr:has(.내용2) {
+    display: none !important
+}
+
+.내용,
+.내용3,
+.변경,
+.교시,
+.제목,
+.박스2 {
+    width: 10% !important;
+    font-size: 4em;
+    border: 1px solid #000;
+    background-color: white
+}
+
+.교시,
+.제목 {
+    font-weight: 700;
+    background-color: #f0f0f0;
+}
+
+.변경 {
+    background-color: #0d4cbb;
+    color: white;
+    font-weight: 600
+}
+
+.교시 {
+    width: 1% !important;
+}
+
+body,
+html {
+    height: 100%;
+    margin: 0;
+}
+
+tbody > tr:nth-child(n + 9) {
+    display: none
+}
+
+* {
+    font-family: 'Freesentation', 'Pretendard JP', sans-serif !important;
+}
+} -->
